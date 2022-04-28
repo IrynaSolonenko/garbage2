@@ -1,0 +1,211 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  <title>AIR-PORT-CODES.com API Request</title>
+  <meta name="description" content="How to make an AIR-PORT-CODES jQuery request.">
+  <meta name="author" content="Air-port-codes">
+  <style>
+    #addFlight{
+      color: cornflowerblue;
+      font-size: 18px;
+      display: inline-block;
+      padding: 0 20px;
+    }
+    #addFlight:hover{
+      cursor: pointer;
+      color: #023c6c;
+      font-size: 18px;
+    }
+  </style>
+
+</head>
+
+<body>
+<div class="request-trip-type">
+  <label class="radio">
+    <input type="radio" class="radio__input" name="trip_type" value="Round Trip" checked>
+    <span class="radio__content">Round Trip</span>
+  </label>
+  <label class="radio">
+    <input type="radio" class="radio__input" name="trip_type" value="One Way">
+    <span class="radio__content">One Way</span>
+  </label>
+<!--  <label class="radio">-->
+<!--    <input type="radio" class="radio__input" name="trip_type" value="Multi Way">-->
+<!--    <span class="radio__content">multi Way</span>-->
+<!--  </label>-->
+  <p id="addFlight">add another flight</p>
+</div>
+
+<div class="dates">
+  <label class="field-wrapper field-wrapper--date">
+    <span class="field-wrapper__title">Departure Date:</span>
+    <input type="text" name="departing" required class="field-input autocomplete" placeholder="from" data-date-field="departing">
+  </label>
+  <label class="field-wrapper field-wrapper--date">
+    <span class="field-wrapper__title">Return Date:</span>
+    <input type="text" name="returning" required class="field-input autocomplete" placeholder="to" data-date-field="returning">
+  </label>
+
+
+
+  <div class="dates hidden" style="display: none">
+    <label class="field-wrapper field-wrapper--date">
+      <span class="field-wrapper__title">Departure Date:</span>
+      <input type="text" name="departing" required class="field-input autocomplete" placeholder="from" data-date-field="departing">
+    </label>
+    <label class="field-wrapper field-wrapper--date">
+      <span class="field-wrapper__title">Return Date:</span>
+      <input type="text" name="returning" class="field-input autocomplete" placeholder="to" data-date-field="returning">
+    </label>
+  </div>
+</div>
+
+
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js" type="text/javascript"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js" type="text/javascript"></script>
+
+<script>
+  $(function() {
+    $( '.autocomplete' ).each(function () {
+      var apca = new apc('autocomplete', {
+        key : 'a616012737',
+        //secret : '84cdace6cf3e0c7', // Your API Secret Key: use this if you are not connecting from a web server
+        limit : 7
+      });
+
+      var dataObj = {
+        source: function( request, response ) {
+          // make the request
+          apca.request( request.term );
+
+          // this builds each line of the autocomplete
+          itemObj = function (airport, isChild) {
+            var label;
+            if (isChild) { // format children labels
+              label = '&rdsh;' + airport.iata + ' - ' + airport.name;
+            } else { // format labels
+              label = airport.city;
+              if (airport.state.abbr) {
+                label += ', ' + airport.state.abbr;
+              }
+              label += ', ' + airport.country.name;
+              label += ' (' + airport.iata + ' - ' + airport.name + ')';
+            }
+            return {
+              label: label,
+              value: airport.iata + ' - ' + airport.name,
+              code: airport.iata
+            };
+          };
+
+          // this deals with the successful response data
+          apca.onSuccess = function (data) {
+            var listAry = [],
+                    thisAirport;
+            if (data.status) { // success
+              for (var i = 0, len = data.airports.length; i < len; i++) {
+                thisAirport = data.airports[i];
+                listAry.push(itemObj(thisAirport));
+                if (thisAirport.children) {
+                  for (var j = 0, jLen = thisAirport.children.length; j < jLen; j++) {
+                    listAry.push(itemObj(thisAirport.children[j], true));
+                  }
+                }
+              }
+              response(listAry);
+            } else { // no results
+              response();
+            }
+          };
+          apca.onError = function (data) {
+            response();
+            console.log(data.message);
+          };
+        },
+        select: function( event, ui ) {
+          // do something for click event
+          console.log(ui.item.code);
+        }
+      }
+
+      // this is necessary to allow html entities to display properly in the jqueryUI labels
+      $(this).autocomplete(dataObj).data("ui-autocomplete")._renderItem = function( ul, item) {
+        return $('<li></li>').data('item.autocomplete', item ).html( item.label ).appendTo( ul );
+      };
+    });
+  });
+</script>
+
+
+<script>
+    function createElement({tagName = 'div', classes = [], attributes: attributes = {}, textContent = ''}){
+      if (typeof tagName !== 'string'){
+        console.warn('tagName _createElement method of App must me string');
+        let errorElement = document.createElement('div');
+        errorElement.textContent = 'tagName _createElement method of App must be a string';
+        return errorElement;
+      }
+
+      let element = document.createElement(tagName);
+
+      if (typeof textContent === 'string'){
+        element.textContent = textContent;
+      } else {
+        console.warn('tagName _createElement method of App must me string')
+      }
+
+      if (Array.isArray(classes)){
+        classes.forEach(className =>{
+          if (typeof className === 'string'){
+            element.classList.add(className);
+          } else {
+            console.warn('classes element of App _createElement method must be a string')
+          }
+        })
+      }
+
+
+      if (typeof attributes === 'object' && attributes){
+        Object.entries(attributes).forEach(pair =>{
+          if (pair[0] !== 'string' || pair[1] !== 'string') {
+            element.setAttribute(pair[0], pair[1]);
+          } else {
+            console.warn('classes element of App _createElement method must be a string')
+          }
+        })
+      }
+      return element;
+
+    }
+
+let addFlights = document.querySelector('#addFlight');
+let datesHidden = document.querySelector('.hidden');
+
+addFlights.addEventListener('click', addFlight);
+    function addFlight(){
+      console.log(123)
+      let departingDiv = createElement({tagName: 'div', classes: ['dates']});
+      let departingLabel = createElement({tagName: 'label', classes: ['field-wrapper', 'field-wrapper--date']});
+      let departingSpan = createElement({tagName: 'span', classes: ['field-wrapper__title'], textContent: 'Departure Date:'});
+      let departingInput = createElement({tagName: 'input', classes: ['field-input', 'autocomplete', 'ui-autocomplete-input'], attributes:{type: 'text', placeholder: 'from', 'data-date-field': 'departing', name: 'departing', autocomplete: 'off'}})
+
+      let returningLabel = createElement({tagName: 'label', classes: ['field-wrapper', 'field-wrapper--date']});
+      let returningSpan = createElement({tagName: 'span', classes: ['field-wrapper__title'], textContent: 'Return Date:'});
+      let returningInput = createElement({tagName: 'input', classes: ['autocomplete', 'field-input'], attributes:{type: 'text', placeholder: 'to', 'data-date-field': 'returning',  name: 'departing'}})
+  document.querySelector('.dates').append(departingDiv);
+      departingDiv.append(departingLabel, departingSpan, departingInput, returningLabel, returningSpan, returningInput)
+
+      // datesHidden.style = 'display: visible'
+
+    }
+</script>
+<script src="air-port-codes-api-min.js"></script>
+
+
+
+</body>
+</html>
